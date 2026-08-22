@@ -2,6 +2,10 @@
 
 ## Fish Audio S2.1-Pro
 
+For the complete DE/BS prompt policy, language evidence, copy-ready Global
+Prompt blocks, and acoustic acceptance tests, see
+[`fish-s2.1-prompt-guide-de-bs.md`](fish-s2.1-prompt-guide-de-bs.md).
+
 Dograh's Fish provider uses `s2.1-pro` by default. The project factory always
 passes a non-empty model through `FishAudioTTSSettings`, so that project value
 overrides Pipecat's internal `s2-pro` fallback. A configured custom model still
