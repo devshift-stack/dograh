@@ -99,7 +99,7 @@ async def test_fish_audio_filter_preserves_s2_emotion_tags(text):
         tts=SimpleNamespace(
             provider=ServiceProviders.FISH.value,
             api_key="test-key",
-            model="s2-pro",
+            model="s2.1-pro",
             voice="voice-reference",
             speed=1.0,
         )
