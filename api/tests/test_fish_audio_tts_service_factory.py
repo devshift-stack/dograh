@@ -17,10 +17,10 @@ def test_fish_audio_configuration_defaults():
     config = FishAudioTTSConfiguration(api_key="test-key", voice="voice-reference")
 
     assert config.provider == ServiceProviders.FISH
-    assert config.model == "s2-pro"
+    assert config.model == "s2.1-pro"
     assert config.voice == "voice-reference"
     assert config.speed == 1.0
-    assert FISH_TTS_MODELS == ["s2-pro"]
+    assert FISH_TTS_MODELS == ["s2.1-pro"]
     assert FishAudioTTSConfiguration.model_json_schema()["title"] == "Fish Audio"
     assert REGISTRY[ServiceType.TTS][ServiceProviders.FISH] is FishAudioTTSConfiguration
 
@@ -55,6 +55,29 @@ def test_create_fish_audio_service_uses_pcm_pipeline_settings(
     assert kwargs["settings"].model == "s2-pro"
     assert kwargs["settings"].voice == "voice-reference"
     assert kwargs["settings"].prosody_speed == 1.25
+
+
+def test_create_fish_audio_service_defaults_to_s2_1_pro_when_model_is_unset():
+    user_config = SimpleNamespace(
+        tts=SimpleNamespace(
+            provider=ServiceProviders.FISH.value,
+            api_key="test-key",
+            model=None,
+            voice="voice-reference",
+            speed=1.0,
+        )
+    )
+    audio_config = SimpleNamespace(
+        transport_out_sample_rate=16000,
+        transport_in_sample_rate=16000,
+    )
+
+    with patch(
+        "api.services.pipecat.service_factory.FishAudioTTSService"
+    ) as mock_service:
+        create_tts_service(user_config, audio_config)
+
+    assert mock_service.call_args.kwargs["settings"].model == "s2.1-pro"
 
 
 @pytest.mark.parametrize(

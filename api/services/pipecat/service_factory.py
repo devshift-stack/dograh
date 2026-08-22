@@ -953,7 +953,7 @@ def create_tts_service(
                 status_code=400,
                 detail="Fish Audio TTS requires a voice reference ID.",
             )
-        model = getattr(user_config.tts, "model", None) or "s2-pro"
+        model = getattr(user_config.tts, "model", None) or "s2.1-pro"
         speed = getattr(user_config.tts, "speed", None) or 1.0
         return FishAudioTTSService(
             api_key=user_config.tts.api_key,

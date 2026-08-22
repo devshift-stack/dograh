@@ -51,7 +51,7 @@ The next session should start directly with feature implementation, but should r
 ## Deepgramm EU and Fish Audio implementation (2026-08-22)
 
 - Added `deepgram_eu` as a separate STT provider titled `Deepgramm EU`, using `api.eu.deepgram.com`, the Flux v2 WebSocket URL, and fixed usage tags `dograh` and `eu`.
-- Added Fish Audio as a TTS provider with an `s2-pro` default, manual voice reference ID, speed control, PCM output at the transport sample rate, and the existing XML function-tag filter.
+- Added Fish Audio as a TTS provider with an `s2.1-pro` default, manual voice reference ID, speed control, PCM output at the transport sample rate, and the existing XML function-tag filter.
 - Reused the existing Deepgram key validator and added Fish Audio bearer-key validation without logging credentials.
 - Added focused registry, validity, Nova/Flux routing, Fish PCM/settings, and eight S2 bracket-tag passthrough cases; 31 focused and provider-regression tests pass.
 - The pinned `pipecat/` submodule was not changed. Its existing Deepgram custom endpoint/tag seams and Fish WebSocket service are used through `service_factory.py`.

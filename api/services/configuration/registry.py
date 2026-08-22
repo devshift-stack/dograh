@@ -1465,7 +1465,7 @@ class LmntTTSConfiguration(BaseTTSConfiguration):
     )
 
 
-FISH_TTS_MODELS = ["s2-pro"]
+FISH_TTS_MODELS = ["s2.1-pro"]
 
 
 @register_tts
@@ -1473,7 +1473,7 @@ class FishAudioTTSConfiguration(BaseTTSConfiguration):
     model_config = FISH_PROVIDER_MODEL_CONFIG
     provider: Literal[ServiceProviders.FISH] = ServiceProviders.FISH
     model: str = Field(
-        default="s2-pro",
+        default="s2.1-pro",
         description="Fish Audio TTS model.",
         json_schema_extra={"examples": FISH_TTS_MODELS, "allow_custom_input": True},
     )
