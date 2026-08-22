@@ -18,6 +18,7 @@ from api.services.configuration.options import (
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
 )
 from api.services.configuration.registry import ServiceProviders
+from api.services.pipecat.bosnian_stt_vocab import STT_KEYTERMS, STT_REPLACES
 from api.services.pipecat.gemini_json_schema_adapter import (
     DograhGeminiJSONSchemaAdapter,
 )
@@ -253,6 +254,28 @@ def _validate_runtime_service_url(url: str, field_name: str) -> None:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+def _deepgram_nova_stt_settings(
+    *,
+    language: str,
+    model: str,
+    runtime_keyterms: list[str] | None,
+) -> dict:
+    """Nova STT settings shared by Deepgram US and Deepgram EU."""
+    keyterm = list(dict.fromkeys([*(runtime_keyterms or []), *STT_KEYTERMS]))
+    settings = {
+        "language": language,
+        "profanity_filter": False,
+        "endpointing": 300,
+        "model": model,
+        "keyterm": keyterm,
+        "punctuate": True,
+        "smart_format": True,
+    }
+    if STT_REPLACES:
+        settings["replace"] = list(STT_REPLACES)
+    return settings
+
+
 @_report_service_factory_failures(ErrorSource.STT, config_section="stt")
 def create_stt_service(
     user_config,
@@ -308,13 +331,11 @@ def create_stt_service(
         # Other models than flux
         # Use language from user config, defaulting to "multi" for multilingual support
         language = getattr(user_config.stt, "language", None) or "multi"
-        settings_kwargs = {
-            "language": language,
-            "profanity_filter": False,
-            "endpointing": 100,
-            "model": user_config.stt.model,
-            "keyterm": keyterms or [],
-        }
+        settings_kwargs = _deepgram_nova_stt_settings(
+            language=language,
+            model=user_config.stt.model,
+            runtime_keyterms=keyterms,
+        )
         if is_deepgram_eu:
             settings_kwargs["extra"] = {
                 "tag": list(DEEPGRAM_EU_USAGE_TAGS),
