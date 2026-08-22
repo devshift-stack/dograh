@@ -3,12 +3,11 @@
 
 ## Serena
 Relevant information about the project is in `.serena/memories`.
-If Serena MCP tools are available, read them with `read_memory` (start at `core`).
+If Serena MCP tools are available: call `list_memories`, then `read_memory` on `core` before large code changes. Prefer Serena symbol tools (`find_symbol`, `replace_symbol_body`, references) over wholesale file reads and grep.
 Otherwise read the Markdown files under `.serena/memories/` with normal file tools.
 Do not duplicate those facts into this file.
-
-Dograh is a voice AI platform for building and deploying conversational AI agents with telephony and WebRTC support.
-
+Do not run onboarding unless `core.md` is missing.
+After durable repo changes, update the matching memory (`tech_stack`, `suggested_commands`, `conventions`, or `core`) instead of leaving stale notes.
 ## Project Structure
 
 ```

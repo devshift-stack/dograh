@@ -168,3 +168,9 @@ read_only_memory_patterns: []
 # Extends the list from the global configuration, merging the two lists.
 # Example: ["_archive/.*", "_episodes/.*"]
 ignored_memory_patterns: []
+
+# skip repeat onboarding; memories already exist
+modes:
+  - editing
+  - interactive
+  - no-onboarding
