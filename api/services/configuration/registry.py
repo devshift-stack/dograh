@@ -68,6 +68,7 @@ class ServiceProviders(str, Enum):
     OPENAI = "openai"
     ATLASCLOUD = "atlascloud"
     DEEPGRAM = "deepgram"
+    DEEPGRAM_EU = "deepgram_eu"
     GROQ = "groq"
     OPENROUTER = "openrouter"
     INWORLD = "inworld"
@@ -98,6 +99,7 @@ class ServiceProviders(str, Enum):
     SMALLEST = "smallest"
     XAI = "xai"
     LMNT = "lmnt"
+    FISH = "fish"
 
 
 class BaseServiceConfiguration(BaseModel):
@@ -105,6 +107,7 @@ class BaseServiceConfiguration(BaseModel):
         ServiceProviders.OPENAI,
         ServiceProviders.ATLASCLOUD,
         ServiceProviders.DEEPGRAM,
+        ServiceProviders.DEEPGRAM_EU,
         ServiceProviders.GROQ,
         ServiceProviders.OPENROUTER,
         ServiceProviders.INWORLD,
@@ -131,6 +134,7 @@ class BaseServiceConfiguration(BaseModel):
         ServiceProviders.SMALLEST,
         ServiceProviders.XAI,
         ServiceProviders.LMNT,
+        ServiceProviders.FISH,
     ]
     api_key: str | list[str]
 
@@ -311,10 +315,12 @@ GOOGLE_VERTEX_REALTIME_PROVIDER_MODEL_CONFIG = provider_model_config(
     "Google Vertex Realtime"
 )
 DEEPGRAM_PROVIDER_MODEL_CONFIG = provider_model_config("Deepgram")
+DEEPGRAM_EU_PROVIDER_MODEL_CONFIG = provider_model_config("Deepgramm EU")
 ELEVENLABS_PROVIDER_MODEL_CONFIG = provider_model_config("ElevenLabs")
 CARTESIA_PROVIDER_MODEL_CONFIG = provider_model_config("Cartesia")
 XAI_PROVIDER_MODEL_CONFIG = provider_model_config("xAI")
 LMNT_PROVIDER_MODEL_CONFIG = provider_model_config("LMNT")
+FISH_PROVIDER_MODEL_CONFIG = provider_model_config("Fish Audio")
 INWORLD_PROVIDER_MODEL_CONFIG = provider_model_config(
     "Inworld",
     description=(
@@ -1459,6 +1465,30 @@ class LmntTTSConfiguration(BaseTTSConfiguration):
     )
 
 
+FISH_TTS_MODELS = ["s2-pro"]
+
+
+@register_tts
+class FishAudioTTSConfiguration(BaseTTSConfiguration):
+    model_config = FISH_PROVIDER_MODEL_CONFIG
+    provider: Literal[ServiceProviders.FISH] = ServiceProviders.FISH
+    model: str = Field(
+        default="s2-pro",
+        description="Fish Audio TTS model.",
+        json_schema_extra={"examples": FISH_TTS_MODELS, "allow_custom_input": True},
+    )
+    voice: str = Field(
+        description="Fish Audio voice reference ID.",
+        json_schema_extra={"allow_custom_input": True},
+    )
+    speed: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=2.0,
+        description="Speech speed multiplier (0.5 to 2.0).",
+    )
+
+
 TTSConfig = Annotated[
     Union[
         DeepgramTTSConfiguration,
@@ -1477,6 +1507,7 @@ TTSConfig = Annotated[
         SmallestAITTSConfiguration,
         XAITTSConfiguration,
         LmntTTSConfiguration,
+        FishAudioTTSConfiguration,
     ],
     Field(discriminator="provider"),
 ]
@@ -1488,6 +1519,34 @@ TTSConfig = Annotated[
 class DeepgramSTTConfiguration(BaseSTTConfiguration):
     model_config = DEEPGRAM_PROVIDER_MODEL_CONFIG
     provider: Literal[ServiceProviders.DEEPGRAM] = ServiceProviders.DEEPGRAM
+    model: str = Field(
+        default="nova-3-general",
+        description="Deepgram STT model.",
+        json_schema_extra={"examples": DEEPGRAM_STT_MODELS, "allow_custom_input": True},
+    )
+    language: str = Field(
+        default="multi",
+        description=(
+            "Language code. 'multi' enables Nova-3 auto-detect and omits "
+            "language hints for Flux multilingual auto-detect."
+        ),
+        json_schema_extra={
+            "examples": DEEPGRAM_LANGUAGES,
+            "allow_custom_input": True,
+            "model_options": {
+                "nova-3-general": DEEPGRAM_LANGUAGES,
+                "nova-3-medical": DEEPGRAM_LANGUAGES,
+                "flux-general-en": ("en",),
+                "flux-general-multi": DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
+            },
+        },
+    )
+
+
+@register_stt
+class DeepgramEUSTTConfiguration(BaseSTTConfiguration):
+    model_config = DEEPGRAM_EU_PROVIDER_MODEL_CONFIG
+    provider: Literal[ServiceProviders.DEEPGRAM_EU] = ServiceProviders.DEEPGRAM_EU
     model: str = Field(
         default="nova-3-general",
         description="Deepgram STT model.",
@@ -1881,6 +1940,7 @@ class SmallestAISTTConfiguration(BaseSTTConfiguration):
 STTConfig = Annotated[
     Union[
         DeepgramSTTConfiguration,
+        DeepgramEUSTTConfiguration,
         CartesiaSTTConfiguration,
         OpenAISTTConfiguration,
         GoogleSTTConfiguration,

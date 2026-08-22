@@ -51,6 +51,7 @@ from pipecat.services.elevenlabs.stt import (
     ElevenLabsRealtimeSTTSettings,
 )
 from pipecat.services.elevenlabs.tts import ElevenLabsTTSService, ElevenLabsTTSSettings
+from pipecat.services.fish.tts import FishAudioTTSService, FishAudioTTSSettings
 from pipecat.services.gladia.stt import GladiaSTTService, GladiaSTTSettings
 from pipecat.services.google.llm import GoogleLLMService, GoogleLLMSettings
 from pipecat.services.google.stt import GoogleSTTService, GoogleSTTSettings
@@ -101,6 +102,11 @@ from pipecat.utils.text.xml_function_tag_filter import XMLFunctionTagFilter
 if TYPE_CHECKING:
     from api.schemas.ai_model_configuration import EffectiveAIModelConfiguration
     from api.services.pipecat.audio_config import AudioConfig
+
+
+DEEPGRAM_EU_BASE_URL = "api.eu.deepgram.com"
+DEEPGRAM_EU_FLUX_URL = f"wss://{DEEPGRAM_EU_BASE_URL}/v2/listen"
+DEEPGRAM_EU_USAGE_TAGS = ["dograh", "eu"]
 
 
 def _report_service_factory_failures(
@@ -263,7 +269,11 @@ def create_stt_service(
     logger.info(
         f"Creating STT service: provider={user_config.stt.provider}, model={user_config.stt.model}"
     )
-    if user_config.stt.provider == ServiceProviders.DEEPGRAM.value:
+    if user_config.stt.provider in {
+        ServiceProviders.DEEPGRAM.value,
+        ServiceProviders.DEEPGRAM_EU.value,
+    }:
+        is_deepgram_eu = user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value
         if user_config.stt.model in DEEPGRAM_FLUX_MODELS:
             settings_kwargs = {
                 "model": user_config.stt.model,
@@ -278,26 +288,49 @@ def create_stt_service(
                 if language_hint:
                     settings_kwargs["language_hints"] = [language_hint]
 
+            if is_deepgram_eu:
+                return DeepgramFluxSTTService(
+                    api_key=user_config.stt.api_key,
+                    url=DEEPGRAM_EU_FLUX_URL,
+                    tag=list(DEEPGRAM_EU_USAGE_TAGS),
+                    settings=DeepgramFluxSTTSettings(**settings_kwargs),
+                    should_interrupt=False,
+                    sample_rate=audio_config.transport_in_sample_rate,
+                )
+
             return DeepgramFluxSTTService(
                 api_key=user_config.stt.api_key,
                 settings=DeepgramFluxSTTSettings(**settings_kwargs),
-                should_interrupt=False,  # Let UserAggregator take care of sending InterruptionFrame
+                should_interrupt=False,
                 sample_rate=audio_config.transport_in_sample_rate,
             )
 
         # Other models than flux
         # Use language from user config, defaulting to "multi" for multilingual support
         language = getattr(user_config.stt, "language", None) or "multi"
+        settings_kwargs = {
+            "language": language,
+            "profanity_filter": False,
+            "endpointing": 100,
+            "model": user_config.stt.model,
+            "keyterm": keyterms or [],
+        }
+        if is_deepgram_eu:
+            settings_kwargs["extra"] = {
+                "tag": list(DEEPGRAM_EU_USAGE_TAGS),
+            }
+            return DeepgramSTTService(
+                api_key=user_config.stt.api_key,
+                base_url=DEEPGRAM_EU_BASE_URL,
+                settings=DeepgramSTTSettings(**settings_kwargs),
+                should_interrupt=False,
+                sample_rate=audio_config.transport_in_sample_rate,
+            )
+
         return DeepgramSTTService(
             api_key=user_config.stt.api_key,
-            settings=DeepgramSTTSettings(
-                language=language,
-                profanity_filter=False,
-                endpointing=100,
-                model=user_config.stt.model,
-                keyterm=keyterms or [],
-            ),
-            should_interrupt=False,  # Let UserAggregator take care of sending InterruptionFrame
+            settings=DeepgramSTTSettings(**settings_kwargs),
+            should_interrupt=False,
             sample_rate=audio_config.transport_in_sample_rate,
         )
     elif user_config.stt.provider == ServiceProviders.OPENAI.value:
@@ -908,6 +941,28 @@ def create_tts_service(
                 voice=voice,
                 language=pipecat_language,
                 model=model,
+            ),
+            text_filters=[xml_function_tag_filter],
+            skip_aggregator_types=["recording_router", "recording"],
+            silence_time_s=1.0,
+        )
+    elif user_config.tts.provider == ServiceProviders.FISH.value:
+        voice = getattr(user_config.tts, "voice", None)
+        if not voice:
+            raise HTTPException(
+                status_code=400,
+                detail="Fish Audio TTS requires a voice reference ID.",
+            )
+        model = getattr(user_config.tts, "model", None) or "s2-pro"
+        speed = getattr(user_config.tts, "speed", None) or 1.0
+        return FishAudioTTSService(
+            api_key=user_config.tts.api_key,
+            output_format="pcm",
+            sample_rate=audio_config.transport_out_sample_rate,
+            settings=FishAudioTTSSettings(
+                model=model,
+                voice=voice,
+                prosody_speed=speed,
             ),
             text_filters=[xml_function_tag_filter],
             skip_aggregator_types=["recording_router", "recording"],

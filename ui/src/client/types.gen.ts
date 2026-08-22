@@ -579,13 +579,17 @@ export type ByokPipelineAiModelConfiguration = {
         provider: 'xai';
     } & XaittsConfiguration) | ({
         provider: 'lmnt';
-    } & LmntTtsConfiguration);
+    } & LmntTtsConfiguration) | ({
+        provider: 'fish';
+    } & FishAudioTtsConfiguration);
     /**
      * Stt
      */
     stt: ({
         provider: 'deepgram';
     } & DeepgramSttConfiguration) | ({
+        provider: 'deepgram_eu';
+    } & DeepgramEusttConfiguration) | ({
         provider: 'cartesia';
     } & CartesiaSttConfiguration) | ({
         provider: 'openai';
@@ -1860,6 +1864,32 @@ export type DailyUsageItem = {
 };
 
 /**
+ * Deepgramm EU
+ */
+export type DeepgramEusttConfiguration = {
+    /**
+     * Provider
+     */
+    provider?: 'deepgram_eu';
+    /**
+     * Api Key
+     */
+    api_key: string | Array<string>;
+    /**
+     * Model
+     *
+     * Deepgram STT model.
+     */
+    model?: string;
+    /**
+     * Language
+     *
+     * Language code. 'multi' enables Nova-3 auto-detect and omits language hints for Flux multilingual auto-detect.
+     */
+    language?: string;
+};
+
+/**
  * Deepgram
  */
 export type DeepgramSttConfiguration = {
@@ -2627,6 +2657,38 @@ export type FileMetadataResponse = {
     metadata: {
         [key: string]: unknown;
     } | null;
+};
+
+/**
+ * Fish Audio
+ */
+export type FishAudioTtsConfiguration = {
+    /**
+     * Provider
+     */
+    provider?: 'fish';
+    /**
+     * Api Key
+     */
+    api_key: string | Array<string>;
+    /**
+     * Model
+     *
+     * Fish Audio TTS model.
+     */
+    model?: string;
+    /**
+     * Voice
+     *
+     * Fish Audio voice reference ID.
+     */
+    voice: string;
+    /**
+     * Speed
+     *
+     * Speech speed multiplier (0.5 to 2.0).
+     */
+    speed?: number;
 };
 
 /**
